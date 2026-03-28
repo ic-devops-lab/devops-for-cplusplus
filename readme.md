@@ -308,7 +308,7 @@ Options covered in the lab are:
 
 #### Linux machine
 
-Follow the runbook.
+Follow the [local runbook](./docs/runbook-ms001.md).
 
 ---
 
@@ -321,6 +321,8 @@ For Milestone 1 we will need just:
 - A security group for development infrastructure
 - A small VM towork with the code (build, test and run)
 
-All configuration files you can find in the `infra/terraform` folder
+All configuration files you can find in the `infra/terraform` folder.
+
+And check the [rerraform runbook](./docs/runbook-tf-ms001.md) for how to use it.
 
 ---

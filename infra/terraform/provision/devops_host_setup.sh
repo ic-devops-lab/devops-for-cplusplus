@@ -15,4 +15,4 @@ sudo apt install -y \
   python3-pip
 
 # copy project files from the GitHub repo
-git clone "${project_repo_url}" /home/ubuntu/cppcicd
+git clone "${project_repo_url}" -b 001-local-setup /home/ubuntu/cppcicd
