@@ -256,21 +256,75 @@ So this script is the single entry point for “verify app locally”.
 
 #### `scripts/run_local.sh`
 
-*Purpose*: start the app locally.
+*Purpose*: start the app locally without systemd.
 
-It launches:
+- starts the compiled binary from `build/echo_server`
 ```
 build/echo_server
 ```
-with environment values such as:
-- `APP_BIND_ADDRESS`
-- `APP_PORT`
-- `APP_ENV`
-- `APP_NODE_ID`
+- uses environment variables for configuration
+  - `APP_BIND_ADDRESS`
+  - `APP_PORT`
+  - `APP_ENV`
+  - `APP_NODE_ID`
+- intended for quick local development and debugging
 
 By default it runs on:
 - 127.0.0.1
 - port 8080
+
+---
+
+#### `scripts/install_service.sh`
+
+*Purpose*: install or update the application as a systemd service.
+
+- copies the compiled binary to `/opt/echo-app/`
+- creates or updates environment configuration at `/etc/echo-app/app.env`
+- creates or updates systemd unit file `/etc/systemd/system/app.service`
+- reloads systemd and enables the service
+- restarts the service to apply updates
+
+The application is configured via:
+```
+/etc/echo-app/app.env
+```
+
+Example:
+```
+APP_BIND_ADDRESS=0.0.0.0
+APP_PORT=8080
+APP_ENV=dev
+APP_NODE_ID=node-local
+```
+
+You can modify this file and restart the service:
+```
+sudo systemctl restart app.service
+```
+
+---
+
+### `scripts/service_control.sh`
+
+*Purpose*: control the systemd service lifecycle.
+
+Supported commands:
+
+- `start` → start the service
+- `stop` → stop the service
+- `restart` → restart the service
+- `status` → check service status
+- `logs` → stream service logs via `journalctl`
+- `enable` → enable service at boot
+- `disable` → disable service at boot
+
+Example:
+
+```bash
+./scripts/service_control.sh status
+./scripts/service_control.sh logs
+```
 
 ---
 

@@ -31,7 +31,7 @@ variable "devops_key_pair_name" {
 variable "devops_instance_type" {
   description = "The instance type for the DevOps EC2 instance"
   type        = string
-  default     = "t3.micro"
+  default     = "m7i-flex.large" # 2 vCPUs, 8 GB RAM
 }
 
 variable "devops_instance_ami" {

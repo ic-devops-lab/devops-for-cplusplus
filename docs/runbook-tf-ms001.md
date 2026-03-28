@@ -53,7 +53,7 @@ ssh -i .secrets/devopskeypair ubuntu@<instance_public_ip>
 ```
 > NOTE: If you're using free tier resources, the public IPs of your instances are ephemeral, they will be changed in 24h. If you haven't destroyed and re-created your infrastracture by `terraform destrou/apply` and use a new public IP accessing an inctance via SSH, don't forget to add it manually to the ips_to_remove.txt file as a new line. That will help you to keep your known_hosts file clean of expired and unused records.
 
-## Check
+## Check provision
 
 On your AWS devops instance:
 ```
@@ -72,6 +72,10 @@ ls -l
 total 4
 drwxr-xr-x 7 root root 4096 Mar 28 14:56 cppcicd
 ```
+
+## Build, Test, Install, Run the app
+
+Follow these [instructions](./runbook-local.md)
 
 ## Cleanup
 

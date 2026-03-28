@@ -26,6 +26,7 @@ terraform validate                # validate your terraform code (in case you mo
 terraform plan                    # check upcoming infrastructure changes
 terraform apply                   # apply changes
 ```
+> `-auto-approve` parameter allows you to skip interactive confirmation during `plan` and `apply` stages
 
 ## Access the Lab AWS node(s) from home
 
