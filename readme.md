@@ -73,6 +73,8 @@ autonomy-cicd-lab/
     build.sh
     test.sh
     run_local.sh
+    install_service.sh
+    service_control.sh
 ```
 
 For now, the important split is:
@@ -305,7 +307,7 @@ sudo systemctl restart app.service
 
 ---
 
-### `scripts/service_control.sh`
+#### `scripts/service_control.sh`
 
 *Purpose*: control the systemd service lifecycle.
 

@@ -1,8 +1,8 @@
-# Local Runbbok
+# Local Runbook
 
 This document contains the instructions of how to build, test and run the project locally
 
-## Prerequisits
+## Prerequisites
 
 - configured devops environment
   - option 1: [local setup](./runbook-ms001.md)
