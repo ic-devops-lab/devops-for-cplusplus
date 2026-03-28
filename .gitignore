@@ -1,0 +1,9 @@
+build/
+.pytest_cache/
+.venv/
+artifacts/
+coverage/
+*.tar.gz
+*.log
+**tmp/
+**.code-workspace
