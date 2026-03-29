@@ -5,20 +5,21 @@
 
 namespace {
 
-std::string get_env_or_default(const char* key, const std::string& fallback) {
-  const char* value = std::getenv(key);
+std::string get_env_or_default(const char *key, const std::string &fallback) {
+  const char *value = std::getenv(key);
   return value == nullptr ? fallback : std::string(value);
 }
 
-int get_int_env_or_default(const char* key, int fallback) {
-  const char* value = std::getenv(key);
+int get_int_env_or_default(const char *key, int fallback) {
+  const char *value = std::getenv(key);
   if (value == nullptr) {
     return fallback;
   }
   try {
     return std::stoi(value);
   } catch (...) {
-    throw std::runtime_error(std::string("invalid integer for env var: ") + key);
+    throw std::runtime_error(std::string("invalid integer for env var: ") +
+                             key);
   }
 }
 
@@ -35,7 +36,7 @@ AppConfig load_config_from_env() {
   return cfg;
 }
 
-nlohmann::json make_config_payload(const AppConfig& cfg) {
+nlohmann::json make_config_payload(const AppConfig &cfg) {
   return {
       {"bind_address", cfg.bind_address},
       {"port", cfg.port},

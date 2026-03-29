@@ -13,6 +13,6 @@ struct AppConfig {
 };
 
 AppConfig load_config_from_env();
-nlohmann::json make_config_payload(const AppConfig& cfg);
+nlohmann::json make_config_payload(const AppConfig &cfg);
 
 } // namespace lab

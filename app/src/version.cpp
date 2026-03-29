@@ -13,7 +13,7 @@ std::string app_version() {
 }
 
 std::string git_commit() {
-  const char* value = std::getenv("GIT_COMMIT");
+  const char *value = std::getenv("GIT_COMMIT");
   return value == nullptr ? "unknown" : std::string(value);
 }
 

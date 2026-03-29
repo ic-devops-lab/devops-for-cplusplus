@@ -17,6 +17,7 @@ JENKINS_PLUGINS=(
   pipeline-stage-view
   blueocean
   warnings-ng
+  timestamper
 )
 
 echo "=== Updating system packages ==="

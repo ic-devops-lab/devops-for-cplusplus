@@ -8,6 +8,8 @@ sudo apt update
 sudo apt install -y \
   build-essential \
   cmake \
+  cppcheck \
+  clang-format \
   git \
   curl \
   python3 \
@@ -15,7 +17,7 @@ sudo apt install -y \
   python3-pip
 
 # copy project files from the GitHub repo
-git clone "${project_repo_url}" -b 001-local-setup /home/ubuntu/cppcicd
+git clone "${project_repo_url}" -b "${branch_name}" /home/ubuntu/cppcicd
 # make ubuntu user the owner of the project files
 sudo chown -R ubuntu:ubuntu /home/ubuntu/cppcicd
 # make the project's bash scripts executable

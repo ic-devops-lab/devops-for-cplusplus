@@ -11,7 +11,8 @@ module "devops_host" {
 
   user_data_script_name = "devops_host_setup.sh"
   user_data_script_vars = {
-    project_repo_url = "https://github.com/ic-devops-lab/devops-for-cplusplus"
+    project_repo_url = "https://github.com/ic-devops-lab/devops-for-cplusplus",
+    branch_name      = "002-jenkins-ci"
   }
 }
 
