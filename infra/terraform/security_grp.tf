@@ -20,6 +20,15 @@ resource "aws_vpc_security_group_ingress_rule" "devops_sg_in_allow_ssh_from_home
   ip_protocol       = "tcp"
 }
 
+# Allow HTTP 8080 access from anywhere (for Jenkins web interface)
+resource "aws_vpc_security_group_ingress_rule" "devops_sg_in_allow_http_8080" {
+  security_group_id = aws_security_group.devops_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 8080
+  to_port           = 8080
+  ip_protocol       = "tcp"
+}
+
 # Allow all ingress traffice from the security group itself (for inter-instance communication)
 # Not needed for Milestone 1
 # resource "aws_vpc_security_group_ingress_rule" "devops_sg_in_allow_all_internal" {

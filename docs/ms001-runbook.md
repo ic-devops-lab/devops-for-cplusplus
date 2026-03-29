@@ -28,4 +28,4 @@ sudo chmod +x /home/ubuntu/cppcicd/scripts/*.sh
 
 ## Build, Test, Install, Run the app
 
-Follow these [instructions](./runbook-local.md)
+Follow these [instructions](./ms001-runbook-local.md)

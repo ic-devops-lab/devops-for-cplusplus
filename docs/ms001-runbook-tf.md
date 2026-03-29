@@ -75,7 +75,7 @@ drwxr-xr-x 7 root root 4096 Mar 28 14:56 cppcicd
 
 ## Build, Test, Install, Run the app
 
-Follow these [instructions](./runbook-local.md)
+Follow these [instructions](./ms001-runbook-local.md)
 
 ## Cleanup
 

@@ -11,4 +11,10 @@ locals {
     "Project"     = var.project_prefix
     "Environment" = "DevOps"
   }
+
+  jenkins_srv_tags = {
+    "Name"        = "${var.project_prefix}-jenkins-srv"
+    "Project"     = var.project_prefix
+    "Environment" = "DevOps"
+  }
 }

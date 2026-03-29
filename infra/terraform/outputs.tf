@@ -1,12 +1,18 @@
 output "devops_instance_public_ip" {
   description = "The public IP address of the DevOps EC2 instance"
-  value       = aws_instance.devops_host.public_ip
+  value       = module.devops_host.public_ip
+}
+
+output "jenkins_srv_public_ip" {
+  description = "The public IP address of the Jenkins EC2 instance"
+  value       = module.jenkins_srv.public_ip
 }
 
 # Track IPs for all instances - scalable with for_each
 resource "null_resource" "track_ips" {
   for_each = {
-    devops_host = aws_instance.devops_host.public_ip
+    devops_host = module.devops_host.public_ip
+    jenkins_srv = module.jenkins_srv.public_ip
     # Later add more instances here:
     # app_server = aws_instance.app_server.public_ip
     # db_server = aws_instance.db_server.public_ip
@@ -20,7 +26,11 @@ resource "null_resource" "track_ips" {
     public_ip = each.value
   }
 
-  depends_on = [aws_instance.devops_host]
+  depends_on = [
+    module.devops_host,
+    module.jenkins_srv,
+    # Later add more instances here:
+  ]
 }
 
 # Cleanup known_hosts when destroying

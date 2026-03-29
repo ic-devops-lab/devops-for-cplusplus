@@ -1,14 +1,28 @@
-# ### DevOps environment instance
-resource "aws_instance" "devops_host" {
-  ami                    = var.devops_instance_ami
-  instance_type          = var.devops_instance_type
+# ### DevOps environment instances
+
+# DevOps instance
+module "devops_host" {
+  source = "./modules/instance"
+
   key_name               = aws_key_pair.devops_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.devops_sg.id]
-  availability_zone      = var.devops_instance_zone
 
   tags = local.devops_instance_tags
 
-  user_data_base64 = base64encode(templatefile("${path.module}/provision/devops_host_setup.sh", {
+  user_data_script_name = "devops_host_setup.sh"
+  user_data_script_vars = {
     project_repo_url = "https://github.com/ic-devops-lab/devops-for-cplusplus"
-  }))
+  }
+}
+
+# Jemkins server
+module "jenkins_srv" {
+  source = "./modules/instance"
+
+  key_name               = aws_key_pair.devops_key_pair.key_name
+  vpc_security_group_ids = [aws_security_group.devops_sg.id]
+
+  tags = local.jenkins_srv_tags
+
+  user_data_script_name = "jenkins_master_setup.sh"
 }

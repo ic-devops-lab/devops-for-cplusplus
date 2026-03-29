@@ -22,26 +22,3 @@ variable "devops_key_pair_name" {
   type        = string
   default     = "devopskeypair"
 }
-
-# ### ### EC2 instancies
-
-# ### DevOps environment
-
-# DevOps instance
-variable "devops_instance_type" {
-  description = "The instance type for the DevOps EC2 instance"
-  type        = string
-  default     = "m7i-flex.large" # 2 vCPUs, 8 GB RAM
-}
-
-variable "devops_instance_ami" {
-  description = "The AMI ID for the DevOps EC2 instance"
-  type        = string
-  default     = "ami-0ec10929233384c7f" # Ubuntu Server 24.04 LTS (HVM),EBS General Purpose (SSD) Volume Type
-}
-
-variable "devops_instance_zone" {
-  description = "The availability zone for the DevOps EC2 instance"
-  type        = string
-  default     = "us-east-1a"
-}
