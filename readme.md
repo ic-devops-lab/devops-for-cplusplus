@@ -271,6 +271,14 @@ Milestone 2 is complete when:
 - pipeline archives an artifact for download
 - documentation clearly explains the chosen design
 
+How it should look like in Jenkins:
+---
+![ms002-jenkins-ci-overview](./docs/images/ms002-jenkins-ci-overview.png)
+---
+![ms002-jenkins-ci-stages](./docs/images/ms002-jenkins-ci-stages.png)
+---
+![ms002-jenkins-ci-artifacts](./docs/images/ms002-jenkins-ci-artifacts.png)
+
 ---
 
 ## Expected next milestone after this one
