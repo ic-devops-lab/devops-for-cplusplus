@@ -257,6 +257,14 @@ Why this is enough for now:
 
 ---
 
+## Runbook
+
+Checkout:
+- [Jenkins runbook for Milestone 2](./docs/ms002-runbook-jenkins.md)
+- [Jenkins pipeline design runbook](./docs/ms002-pipeline-design.md)
+
+---
+
 ## Definition of done
 
 Milestone 2 is complete when:
