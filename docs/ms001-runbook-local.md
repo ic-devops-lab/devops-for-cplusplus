@@ -6,7 +6,7 @@ This document contains the instructions of how to build, test and run the projec
 
 - configured devops environment
   - option 1: [local setup](./ms001-runbook.md)
-  - option 2 (***recommended**): [devops VM on AWS](./ms001-runbook-tf.md)
+  - option 2 (***recommended**): [DevOps VM on AWS](./ms001-runbook-tf.md)
 
 ## Check the project scripts
 
