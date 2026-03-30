@@ -2,13 +2,13 @@
 set -euo pipefail
 
 LOG_FILE="/var/log/jenkins-bootstrap.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
+exec > >(tee "$LOG_FILE") 2>&1
 
 echo "=== Jenkins bootstrap started ==="
 date
 
 export DEBIAN_FRONTEND=noninteractive
-export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 
 JENKINS_PLUGINS=(
   workflow-aggregator
@@ -21,10 +21,10 @@ JENKINS_PLUGINS=(
 )
 
 echo "=== Updating system packages ==="
-sudo apt update -y
+apt-get update -y
 
 echo "=== Installing base packages ==="
-sudo apt install -y \
+apt-get install -y \
   ca-certificates \
   curl \
   gnupg \
@@ -53,53 +53,65 @@ cppcheck --version
 clang-format --version
 
 echo "=== Installing Jenkins LTS ==="
-sudo install -d -m 0755 /etc/apt/keyrings
+install -d -m 0755 /etc/apt/keyrings
 
 curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key \
-  | sudo tee /etc/apt/keyrings/jenkins-keyring.asc > /dev/null
+  | tee /etc/apt/keyrings/jenkins-keyring.asc > /dev/null
 
 echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
-  | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+  | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 
-sudo apt update -y
-sudo apt install -y jenkins
+apt-get update -y
+apt-get install -y jenkins
 
-echo "=== Ensuring Jenkins directories exist ==="
-sudo mkdir -p /var/lib/jenkins/tools
-sudo mkdir -p /var/lib/jenkins/plugins
-sudo chown -R jenkins:jenkins /var/lib/jenkins
-sudo chmod 755 /var/lib/jenkins
-sudo chmod 755 /var/lib/jenkins/tools
-sudo chmod 755 /var/lib/jenkins/plugins
+echo "=== Preparing Jenkins home and plugin directories ==="
+mkdir -p /var/lib/jenkins/tools
+mkdir -p /var/lib/jenkins/plugins
+chown -R jenkins:jenkins /var/lib/jenkins
+chmod 755 /var/lib/jenkins
+chmod 755 /var/lib/jenkins/tools
+chmod 755 /var/lib/jenkins/plugins
 
-echo "=== Stopping Jenkins before plugin installation ==="
-sudo systemctl stop jenkins || true
+echo "=== Installing Jenkins plugins (offline) ==="
 
-echo "=== Installing Jenkins plugins ==="
+# Stop Jenkins before modifying plugin directory
+systemctl stop jenkins || true
+
 PLUGIN_FILE="$(mktemp).txt"
-printf "%s\n" "${JENKINS_PLUGINS[@]}" | sudo tee "$PLUGIN_FILE" > /dev/null
+printf "%s\n" "${JENKINS_PLUGINS[@]}" | tee "$PLUGIN_FILE" > /dev/null
 
 PLUGIN_MANAGER_VERSION="2.14.0"
 PLUGIN_MANAGER_JAR="/usr/local/bin/jenkins-plugin-manager.jar"
+JENKINS_WAR="/usr/share/java/jenkins.war"
 
-sudo curl -fsSL -o "$PLUGIN_MANAGER_JAR" \
+echo "Downloading Jenkins Plugin Manager Tool..."
+curl -fsSL -o "$PLUGIN_MANAGER_JAR" \
   "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/${PLUGIN_MANAGER_VERSION}/jenkins-plugin-manager-${PLUGIN_MANAGER_VERSION}.jar"
 
-sudo chmod 0644 "$PLUGIN_MANAGER_JAR"
+chmod 0644 "$PLUGIN_MANAGER_JAR"
 
-sudo mkdir -p /var/lib/jenkins/plugins
+if [[ ! -f "$JENKINS_WAR" ]]; then
+  echo "ERROR: Jenkins WAR not found at $JENKINS_WAR"
+  exit 1
+fi
 
-sudo java -jar "$PLUGIN_MANAGER_JAR" \
-  --war /usr/share/java/jenkins.war \
+echo "Installing plugins into /var/lib/jenkins/plugins..."
+
+mkdir -p /var/lib/jenkins/plugins
+
+java -jar "$PLUGIN_MANAGER_JAR" \
+  --war "$JENKINS_WAR" \
   --plugin-file "$PLUGIN_FILE" \
   --plugin-download-directory /var/lib/jenkins/plugins
 
 rm -f "$PLUGIN_FILE"
 
-sudo chown -R jenkins:jenkins /var/lib/jenkins/plugins
+chown -R jenkins:jenkins /var/lib/jenkins/plugins
+
+echo "=== Plugins installed successfully ==="
 
 echo "=== Enabling and starting Jenkins ==="
-sudo systemctl enable --now jenkins
+systemctl enable --now jenkins
 
 echo "=== Waiting for Jenkins to become available ==="
 JENKINS_READY=0
@@ -115,7 +127,7 @@ done
 
 if [[ "$JENKINS_READY" -ne 1 ]]; then
   echo "ERROR: Jenkins did not become ready in time"
-  sudo systemctl status --no-pager jenkins || true
+  systemctl status --no-pager jenkins || true
   exit 1
 fi
 
@@ -125,8 +137,18 @@ systemctl status --no-pager jenkins || true
 echo "=== Installed plugins ==="
 ls -1 /var/lib/jenkins/plugins || true
 
-echo "=== Initial admin password ==="
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword || true
+echo "=== Jenkins unlock / admin status ==="
+
+JENKINS_PASSWORD_FILE="/var/lib/jenkins/secrets/initialAdminPassword"
+
+if [[ -f "$JENKINS_PASSWORD_FILE" ]]; then
+  echo "Initial admin password found in file:"
+  cat "$JENKINS_PASSWORD_FILE"
+else
+  echo "No initialAdminPassword file found."
+  echo "Jenkins may already be initialized. Check existing users or inspect logs with:"
+  echo "  journalctl -u jenkins -n 100 --no-pager"
+fi
 
 echo "=== Jenkins bootstrap completed ==="
 date
