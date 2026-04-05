@@ -17,4 +17,10 @@ locals {
     "Project"     = var.project_prefix
     "Environment" = "DevOps"
   }
+
+  sonarqube_srv_tags = {
+    "Name"        = "${var.project_prefix}-sonarqube-srv"
+    "Project"     = var.project_prefix
+    "Environment" = "DevOps"
+  }
 }

@@ -8,11 +8,17 @@ output "jenkins_srv_public_ip" {
   value       = module.jenkins_srv.public_ip
 }
 
+output "sonarqube_srv_public_ip" {
+  description = "The public IP address of the SonarQube EC2 instance"
+  value       = module.sonarqube_srv.public_ip
+}
+
 # Track IPs for all instances - scalable with for_each
 resource "null_resource" "track_ips" {
   for_each = {
-    devops_host = module.devops_host.public_ip
-    jenkins_srv = module.jenkins_srv.public_ip
+    devops_host   = module.devops_host.public_ip
+    jenkins_srv   = module.jenkins_srv.public_ip
+    sonarqube_srv = module.sonarqube_srv.public_ip
     # Later add more instances here:
     # app_server = aws_instance.app_server.public_ip
     # db_server = aws_instance.db_server.public_ip
@@ -29,6 +35,7 @@ resource "null_resource" "track_ips" {
   depends_on = [
     module.devops_host,
     module.jenkins_srv,
+    module.sonarqube_srv
     # Later add more instances here:
   ]
 }

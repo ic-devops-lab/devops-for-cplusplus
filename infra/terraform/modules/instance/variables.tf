@@ -41,3 +41,9 @@ variable "user_data_script_vars" {
   type        = map(any)
   default = {}
 }
+
+variable "user_data_replace_on_change" {
+  description = "Whether to replace the instance when the user data script changes"
+  type        = bool
+  default     = true
+}
