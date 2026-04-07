@@ -18,6 +18,8 @@ JENKINS_PLUGINS=(
   blueocean
   warnings-ng
   timestamper
+  sonar
+  locale
 )
 
 echo "=== Updating system packages ==="

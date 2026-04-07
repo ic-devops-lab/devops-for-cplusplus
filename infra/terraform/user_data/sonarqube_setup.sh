@@ -40,7 +40,7 @@ EOT
 # =============================================================================
 echo "=== Installing Java 17 ==="
 sudo apt-get update -y
-sudo apt-get install openjdk-17-jdk -y
+sudo apt-get install net-tools openjdk-17-jdk -y
 sudo update-alternatives --config java
 java -version
 
@@ -53,7 +53,7 @@ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`
 sudo apt install postgresql postgresql-contrib -y
 
 echo "=== Starting PostgreSQL Service ==="
-#sudo -u postgres psql -c "SELECT version();"
+sudo -u postgres psql -c "SELECT version();"
 sudo systemctl enable --now postgresql.service
 
 
@@ -69,12 +69,13 @@ netstat -tulpena | grep postgres
 # Section 4: Install and Configure SonarQube
 # =============================================================================
 echo "=== Downloading and Installing SonarQube ==="
+SONARQUBE_VERSION="2026.1"
 sudo mkdir -p /sonarqube/
 cd /sonarqube/
-sudo curl -O https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.8.100196.zip
+sudo curl -O https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip
 sudo apt-get install zip -y
-sudo unzip -o sonarqube-9.9.8.100196.zip -d /opt/
-sudo mv /opt/sonarqube-9.9.8.100196/ /opt/sonarqube
+sudo unzip -o sonarqube-${SONARQUBE_VERSION}.zip -d /opt/
+sudo mv /opt/sonarqube-${SONARQUBE_VERSION}/ /opt/sonarqube
 
 echo "=== Setting up SonarQube User and Permissions ==="
 sudo groupadd sonar
@@ -85,7 +86,7 @@ echo "=== Configuring SonarQube Properties ==="
 cp /opt/sonarqube/conf/sonar.properties /root/sonar.properties_backup
 cat <<EOT> /opt/sonarqube/conf/sonar.properties
 sonar.jdbc.username=sonar
-sonar.jdbc.password="${POSTGRES_PW}"
+sonar.jdbc.password=${POSTGRES_PW}
 sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube
 sonar.web.host=0.0.0.0
 sonar.web.port=9000
@@ -158,5 +159,9 @@ echo "=== Configuring Firewall Rules ==="
 sudo ufw allow 80,9000,9001/tcp
 
 echo "=== Installation Complete - System reboot in 30 seconds ==="
+GLOBAL_IP=$(curl -s ifconfig.me)
+echo "SonarQube URL: http://${GLOBAL_IP}:9000"
+echo "Admin Credentials: admin/admin"
+
 sleep 30
 reboot

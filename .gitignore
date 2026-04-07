@@ -15,5 +15,5 @@ coverage/
 *.tfstate
 *.tfstate.backup
 .terraform/
-**/ips_to_remove.txt
+**/ips_to_remove*.txt
 **/terraform.tfvars
