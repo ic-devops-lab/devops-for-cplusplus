@@ -156,6 +156,7 @@ This separation makes the architecture easier to reason about and closer to real
 autonomy-cicd-lab/
   CMakeLists.txt
   readme.md
+  sonar-project.properties
   app/
     src/
       main.cpp
@@ -188,13 +189,6 @@ autonomy-cicd-lab/
     install_service.sh
     service_control.sh
 ```
-
-For now, the important split is:
-- `app/src` and `app/include` → the service
-- `app/tests/unit` → C++ unit tests
-- `app/tests/integration/test_api.py` → Python integration tests
-- `CMakeLists.txt` → build definition
-- `scripts/*.sh` → local workflow wrappers
 
 ---
 
@@ -261,6 +255,12 @@ This order is intentional:
 
 ---
 
+## Runbooks
+
+1. [SonarQube server on AWS](./docs/ms003-runbook-sonarqube.md)
+2. [Jenkins/SonarQube integration](./docs/ms003-runbook-jenkins-sonarqube.md)
+3. [Introducing QonarQube Quality Gate into CI pipeline](./docs/ms003-pipeline-design-sonarqube.md)
+
 ## Definition of done
 
 Milestone 3 is complete when:
@@ -281,7 +281,6 @@ Milestone 3 is complete when:
 - SonarQube runs on a single VM
 - Jenkins still builds on the controller node
 - no deployment stage yet
-- no reverse proxy / HTTPS yet
 - no persistent database tuning / production hardening
 
 These limitations are acceptable for this lab because the goal is to build a clear, reproducible learning path.
