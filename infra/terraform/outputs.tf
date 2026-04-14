@@ -1,16 +1,32 @@
 output "devops_instance_public_ip" {
   description = "The public IP address of the DevOps EC2 instance"
   value       = module.devops_host.public_ip
+  depends_on  = [module.devops_host, module.devops_host.instance_state]
 }
 
 output "jenkins_srv_public_ip" {
   description = "The public IP address of the Jenkins EC2 instance"
   value       = module.jenkins_srv.public_ip
+  depends_on  = [module.jenkins_srv, module.jenkins_srv.instance_state]
+
 }
 
 output "sonarqube_srv_public_ip" {
   description = "The public IP address of the SonarQube EC2 instance"
   value       = module.sonarqube_srv.public_ip
+  depends_on  = [module.sonarqube_srv, module.sonarqube_srv.instance_state]
+}
+
+output "devops_k3s_m_public_ip" {
+  description = "The public IP address of the DevOps k3s master EC2 instance"
+  value       = module.devops_k3s_m.public_ip
+  depends_on  = [module.devops_k3s_m, module.devops_k3s_m.instance_state]
+}
+
+output "devops_k3s_m_private_ip" {
+  description = "The private IP address of the DevOps k3s master EC2 instance"
+  value       = module.devops_k3s_m.private_ip
+  depends_on  = [module.devops_k3s_m]
 }
 
 # Track IPs for all instances - scalable with for_each
@@ -19,6 +35,7 @@ resource "null_resource" "track_ips" {
     devops_host   = module.devops_host.public_ip
     jenkins_srv   = module.jenkins_srv.public_ip
     sonarqube_srv = module.sonarqube_srv.public_ip
+    devops_k3s_m  = module.devops_k3s_m.public_ip
     # Later add more instances here:
     # app_server = aws_instance.app_server.public_ip
     # db_server = aws_instance.db_server.public_ip
@@ -33,10 +50,10 @@ resource "null_resource" "track_ips" {
   }
 
   depends_on = [
-    module.devops_host,
-    module.jenkins_srv,
-    module.sonarqube_srv
-    # Later add more instances here:
+    module.devops_host.instance_state,
+    module.jenkins_srv.instance_state,
+    module.sonarqube_srv.instance_state,
+    module.devops_k3s_m.instance_state # Later add more instances here:
   ]
 }
 

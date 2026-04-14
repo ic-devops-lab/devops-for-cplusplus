@@ -23,4 +23,10 @@ locals {
     "Project"     = var.project_prefix
     "Environment" = "DevOps"
   }
+
+  devops_k3s_m_tags = {
+    "Name"        = "${var.project_prefix}-devops-k3s-m"
+    "Project"     = var.project_prefix
+    "Environment" = "DevOps"
+  }
 }
