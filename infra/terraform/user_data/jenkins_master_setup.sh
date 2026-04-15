@@ -20,6 +20,7 @@ JENKINS_PLUGINS=(
   timestamper
   sonar
   locale
+  kubernetes
 )
 
 echo "=== Updating system packages ==="
@@ -53,6 +54,37 @@ python3 --version
 pip3 --version
 cppcheck --version
 clang-format --version
+
+echo "=== Installing Docker ==="
+# # Uninstall any old Docker versions
+sudo apt remove -y $(dpkg --get-selections docker.io docker-compose docker-doc podman-docker containerd runc | cut -f1) || echo "no old docker versions to remove"
+
+# # Add Docker's official GPG key:
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# # Add the repository to Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
+
+# # Install the Docker packages
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+sudo systemctl enable --now docker
+sudo systemctl status --no-pager docker
+echo "Docker installed"
+echo
 
 echo "=== Installing Jenkins LTS ==="
 install -d -m 0755 /etc/apt/keyrings
@@ -111,6 +143,9 @@ rm -f "$PLUGIN_FILE"
 chown -R jenkins:jenkins /var/lib/jenkins/plugins
 
 echo "=== Plugins installed successfully ==="
+
+echo "=== Adding Jenkins user to docker group ==="
+usermod -aG docker jenkins
 
 echo "=== Enabling and starting Jenkins ==="
 systemctl enable --now jenkins

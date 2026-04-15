@@ -1,0 +1,75 @@
+pipeline {
+  agent any
+
+  environment {
+    IMAGE_TAG = 'jenkins-cpp-agent:1.0'
+    DOCKERFILE_PATH = 'docker/jenkins-agent/Dockerfile'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build Image') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_TOKEN_UNUSED'
+        )]) {
+          sh '''
+            docker build -t "${DOCKER_USER}/${IMAGE_TAG}" -f "${DOCKERFILE_PATH}" .
+          '''
+        }
+      }
+    }
+
+    stage('Check') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_TOKEN_UNUSED'
+        )]) {
+          sh '''
+            docker run --rm "${DOCKER_USER}/${IMAGE_TAG}" bash -c '
+              echo "=== Git Version ===" && git --version
+              echo "=== CMake Version ===" && cmake --version
+              echo "=== Python3 Version ===" && python3 --version
+              echo "=== Cppcheck Version ===" && cppcheck --version
+              echo "=== Clang-Format Version ===" && clang-format --version
+              echo "=== G++ Version ===" && g++ --version
+            '
+          '''
+        }
+      }
+    }
+
+    stage('Push Image') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_TOKEN'
+        )]) {
+          sh '''
+            echo "${DOCKER_TOKEN}" | docker login -u "${DOCKER_USER}" --password-stdin
+            docker push "${DOCKER_USER}/${IMAGE_TAG}"
+          '''
+        }
+      }
+    }
+
+    stage('Cleanup') {
+      steps {
+        sh '''
+          docker image prune -f
+          docker system prune -f
+        '''
+      }
+    }
+  }
+}
