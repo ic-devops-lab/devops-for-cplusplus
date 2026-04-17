@@ -5,6 +5,11 @@ resource "aws_instance" "vm" {
   vpc_security_group_ids = var.vpc_security_group_ids
   availability_zone = var.availability_zone
 
+  root_block_device {
+    volume_size = var.disk_size
+    volume_type = "gp3"
+  }
+
   tags = var.tags
 
   user_data_base64 = base64encode(file("${path.module}/../../user_data/${var.user_data_script_name}"))

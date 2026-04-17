@@ -11,6 +11,13 @@ output "jenkins_srv_public_ip" {
 
 }
 
+output "jenkins_srv_private_ip" {
+  description = "The private IP address of the Jenkins EC2 instance"
+  value       = module.jenkins_srv.private_ip
+  depends_on  = [module.jenkins_srv, module.jenkins_srv.instance_state]
+
+}
+
 output "sonarqube_srv_public_ip" {
   description = "The public IP address of the SonarQube EC2 instance"
   value       = module.sonarqube_srv.public_ip

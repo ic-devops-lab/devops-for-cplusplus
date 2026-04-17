@@ -23,6 +23,8 @@ module "jenkins_srv" {
   key_name               = aws_key_pair.devops_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.devops_sg.id]
 
+  disk_size = 30
+
   tags = local.jenkins_srv_tags
 
   user_data_script_name = "jenkins_master_setup.sh"
@@ -35,6 +37,8 @@ module "sonarqube_srv" {
   key_name               = aws_key_pair.devops_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.devops_sg.id]
 
+  disk_size = 30
+
   tags = local.sonarqube_srv_tags
 
   user_data_script_name = "sonarqube_setup.sh"
@@ -46,6 +50,8 @@ module "devops_k3s_m" {
 
   key_name               = aws_key_pair.devops_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.devops_sg.id]
+
+  disk_size = 30
 
   tags = local.devops_k3s_m_tags
 

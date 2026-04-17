@@ -35,14 +35,14 @@ pipeline {
           passwordVariable: 'DOCKER_TOKEN_UNUSED'
         )]) {
           sh '''
-            docker run --rm "${DOCKER_USER}/${IMAGE_TAG}" bash -c '
-              echo "=== Git Version ===" && git --version
-              echo "=== CMake Version ===" && cmake --version
-              echo "=== Python3 Version ===" && python3 --version
-              echo "=== Cppcheck Version ===" && cppcheck --version
-              echo "=== Clang-Format Version ===" && clang-format --version
-              echo "=== G++ Version ===" && g++ --version
-            '
+            docker run --rm "${DOCKER_USER}/${IMAGE_TAG}" bash -c "
+              echo '=== Git Version ===' && git --version &&
+              echo '=== CMake Version ===' && cmake --version &&
+              echo '=== Python3 Version ===' && python3 --version &&
+              echo '=== Cppcheck Version ===' && cppcheck --version &&
+              echo '=== Clang-Format Version ===' && clang-format --version &&
+              echo '=== G++ Version ===' && g++ --version
+            "
           '''
         }
       }

@@ -223,3 +223,83 @@ sudo tail -n 100 /var/log/k3s-bootstrap.log
 ```
 
 ---
+
+## 10. Export kubeconfig
+
+Retrieve kubeconfig:
+
+```bash
+sudo cat /etc/rancher/k3s/k3s.yaml
+```
+
+Important:
+This file usually points to `https://127.0.0.1:6443`.
+
+That will **not** work for Jenkins on another VM.
+
+Copy the kubeconfig content locally and replace:
+
+```yaml
+server: https://127.0.0.1:6443
+```
+
+with:
+
+```yaml
+server: https://<k3s-private-ip>:6443
+```
+
+where `<k3s-private-ip>` is the private IP of the k3s VM.
+
+Save that adjusted file securely.
+You will use it in Jenkins as a credential.
+
+---
+
+## 11. Validate API reachability from Jenkins VM
+
+SSH into the Jenkins VM and test connectivity to k3s:
+
+```bash
+curl -k https://<k3s-private-ip>:6443/version
+```
+
+You should get a response from the Kubernetes API like this:
+```
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "Unauthorized",
+  "reason": "Unauthorized",
+  "code": 401
+}
+```
+"Unauthorized" status is OK as we don't have k3s credentials on Jenkins controller yet.
+
+If this fails, check:
+
+- security group rules
+- private IP correctness
+- VPC/subnet routing
+- whether k3s is listening
+
+On the k3s VM, verify:
+
+```bash
+sudo ss -ltnp | grep 6443
+```
+
+---
+
+## 12. Definition of done
+
+This runbook is complete when:
+
+- k3s VM exists
+- k3s node is `Ready`
+- adjusted kubeconfig is available
+- Jenkins VM can reach the k3s API on port 6443
+
+---
