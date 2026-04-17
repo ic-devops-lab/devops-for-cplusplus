@@ -1,9 +1,12 @@
 pipeline {
-  agent any
+  agent {
+    label 'k8s-agent'
+  }
 
   options {
     // timestamps()
     disableConcurrentBuilds()
+    timeout(time: 10, unit: 'MINUTES')
   }
 
   environment {
