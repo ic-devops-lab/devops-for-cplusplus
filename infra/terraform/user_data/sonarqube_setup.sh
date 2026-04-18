@@ -69,7 +69,8 @@ netstat -tulpena | grep postgres
 # Section 4: Install and Configure SonarQube
 # =============================================================================
 echo "=== Downloading and Installing SonarQube ==="
-SONARQUBE_VERSION="2026.1"
+SONARQUBE_VERSION="9.9.8.100196"
+# SONARQUBE_VERSION="26.4.0.121862"
 sudo mkdir -p /sonarqube/
 cd /sonarqube/
 sudo curl -O https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONARQUBE_VERSION}.zip

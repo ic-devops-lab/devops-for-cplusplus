@@ -192,7 +192,7 @@ That means:
 
 **Very important!**
 
-If you see any default values in **Command to run** (like `sleep`) and **Arguments**, clean the fields up. The command tu run overrides the container's entrypoint and prevents the jenkins agent from starting.
+For the jnlp container, leave **Command to run** and **Arguments** empty unless intentionally overriding inbound-agent startup. Using a long-running placeholder command such as `sleep` keeps the pod alive but prevents the Jenkins agent from connecting.
 
 ## 8. Why use `jnlp` as the container name
 

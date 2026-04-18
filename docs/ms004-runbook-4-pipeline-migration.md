@@ -178,6 +178,12 @@ pipeline {
 
 This is intentionally similar to the previous milestone.
 
+### Scripted version
+
+Declarative version from above has one potential risk - timeout option in it is activated only after an agent has been assigned. If it has not, the pipeline could hang.
+
+This problem could be solved using a scripted pipeline, where timeout counting is starting before assigning an agent, see [exaple](../jenkins/Jenkinsfile_scripted).
+
 ---
 
 ## 7. Validate the first real run
@@ -257,3 +263,83 @@ The pipeline migration is complete when:
 - artifacts still archive correctly
 
 ---
+
+## 12. Troubleshooting
+
+###  Sonarqube authorization in the pipeline fails.
+
+```
+16:01:20.740 ERROR Error during SonarScanner CLI execution
+16:01:20.740 ERROR Not authorized. Please check the properties sonar.login and sonar.password.
+16:01:20.740 ERROR
+```
+
+#### 1. Basic network reachability from Jenkins VM
+
+From the Jenkins VM:
+```
+curl -I http://<sonarqube-private-ip>:9000
+```
+
+What you want:
+- any HTTP response at all
+- usually `200`, `302`, or similar
+
+If you get:
+- timeout
+- connection refused
+- no route to host
+then it is a network/security-group problem, not auth.
+
+#### 2. Check SonarQube API reachability
+
+This is better than checking the UI page:
+```
+curl http://<sonarqube-ip>:9000/api/system/status
+```
+
+Expected output looks like JSON, for example with a status such as:
+- `UP`
+- `STARTING`
+
+If you get JSON back, then:
+- Jenkins VM can reach SonarQube
+- SonarQube is serving API properly
+
+#### 3. Check authentication with the token directly
+
+From the Jenkins VM:
+```
+export SONAR_HOST_URL="http://<sonarqube-ip>:9000"
+export SONAR_TOKEN="<your-sonarqube-token>"
+
+curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/authentication/validate"
+```
+
+Expected success response:
+```
+{"valid":true}
+```
+If you get:
+- `{"valid":false}`
+- `401`
+- `403`
+then the token is wrong, expired, or not the one Jenkins is using.
+
+#### 4. Check the project is reachable with auth
+
+You can also test:
+```
+curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/projects/search"
+```
+If that works and returns JSON, then auth is definitely working.
+
+If not, probably you've created a token of the rong type. It should be the **User Token**.
+
+#### 5. Check Jenkins configuration
+
+Revise again:
+1. **Credentials** for SonarQube
+2. SonarQube server settings in **System**
+3. SonarQube Installation settings in **Tools**
+4. Pipeline configuration.

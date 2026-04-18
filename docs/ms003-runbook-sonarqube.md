@@ -65,6 +65,8 @@ Recommended Terraform pattern:
 
 That ensures setup changes force a fresh instance when needed.
 
+> Update: We intentionally use an LTS version of SonarQube (`SonarQube 9.9.8 LTS`) to ensure stability and reproducibility of provisioning scripts. Newer versions may introduce changes in packaging or runtime requirements that break automated setup.
+
 ---
 
 ## 4. Server installation strategy
@@ -161,7 +163,7 @@ In SonarQube UI:
 
 1. Log in as admin
 2. Go to your account / security settings
-3. Create a token for Jenkins
+3. Create a User token for Jenkins
 4. Save it securely
 
 This token will later be added in Jenkins credentials.

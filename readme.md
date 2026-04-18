@@ -52,102 +52,156 @@ The goal is to showcase how to support a C++ app from a DevOps perspective, not 
 
 Project stages (milestones) will be saved as branches. The main branch duplicates the most recent project stage.
 
-**Current stage**: Milestone 3 — SonarQube Integration\
-**Branch**: 003-sonarqube
+**Current stage**: Milestone 4 — Dynamic Jenkins Agents on Kubernetes\
+**Branch**: 004-jenkins-agents
 
 **Previous stages**:
 - [Milestone 1: Local Setup](./readme-ms001.md) / branch: 001-local-setup
 - [Milestone 2 — Jenkins CI on AWS](./readme-ms002.md) / branch: 002-jenkins-ci
+- [Milestone 3 — SonarQube Integration](./readme-ms003.md)
 
 ---
 
-# Milestone 3 — SonarQube Integration
+# Milestone 4 — Dynamic Jenkins Agents on Kubernetes
 
-At this stage we add a dedicated **SonarQube server** and integrate it into the existing Jenkins CI pipeline.
+This milestone moves Jenkins build execution off the controller VM and onto **ephemeral Kubernetes-based agents**.
 
-The goal is to introduce a **quality gate** into the delivery flow.\
-Up to Milestone 2, the project already had:
+The goal is not to redesign the whole project around Kubernetes, but to extend the existing Jenkins setup with a more realistic execution model:
 
-- local Linux-based development workflow
-- CMake build
-- unit tests
-- Python integration tests
-- Jenkins CI on AWS
-- artifact packaging and archiving in Jenkins
+- Jenkins controller remains the orchestration layer
+- a dedicated k3s VM provides Kubernetes execution capacity
+- Jenkins provisions agent pods dynamically
+- the pipeline runs on ephemeral agents instead of the controller itself
 
-Milestone 3 extends that setup with **continuous inspection**.
+This milestone is based on the current project state after Milestone 3.
 
 ---
 
 ## Why this milestone exists
 
-For a C++ service, build/test automation alone is not the full story.
-A realistic CI workflow should also answer questions like:
+The project originally focused on CI/CD around a C++ service.
+The current direction extends that into **CI platform engineering**.
 
-- does the code meet a defined quality baseline?
-- can quality checks stop the pipeline before packaging or deployment?
-- can analysis results be centralized and reviewed over time?
+Many real Jenkins environments do not run builds on the controller node.
+Instead, they use:
 
-SonarQube addresses that part of the workflow and introduces:
+- dedicated static agents
+- or dynamic agents provisioned on demand
 
-- a visible quality gate in the pipeline
-- centralized analysis history
-- a more realistic CI flow for C++ code
-- a stronger distinction between:
-  - build success
-  - test success
-  - quality acceptance
+This milestone implements the second model.
 
-That makes the project more representative of production delivery systems.
+That makes the setup much closer to modern CI practice and aligns well with roles involving:
 
-For C and C++, SonarQube analysis needs real build context.
-That is why this milestone is built around generating and using a **compilation database** (`compile_commands.json`) from the CMake build.
-The Jenkins pipeline then submits the analysis and waits for the **quality gate** result before continuing.
+- Jenkins pipeline engineering
+- Jenkins build node management
+- Kubernetes-based CI infrastructure
+- scalable containerized build execution
 
 ---
 
 ## Objective
 
-Introduce a dedicated SonarQube server on AWS and connect it to the existing Jenkins-based CI pipeline for this C++ project.
+Introduce **Jenkins dynamic agents running on k3s** using the Jenkins Kubernetes plugin and a custom Docker-based agent image.
 
-This milestone is intentionally focused on:
+By the end of this milestone:
 
-- static code analysis
-- quality reporting
-- quality gate enforcement
-- keeping the setup reproducible
+- Jenkins controller should connect to k3s
+- Jenkins should provision agent pods on demand
+- the pipeline should run on Kubernetes agents
+- concurrent builds should create multiple agent pods
+- the build should no longer run on the Jenkins controller VM
 
 ---
 
 ## Scope
 
-- dedicated SonarQube VM provisioned with Terraform
-- SonarQube server installation on that VM
-- SonarQube project and token setup
-- Jenkins integration with SonarQube
-- Jenkins pipeline stages for:
-  - SonarQube analysis
-  - Quality Gate check
-- CMake configuration updated to produce `compile_commands.json`
-- Sonar scanner configuration for the project
+Included:
 
-**Not included yet**
-- deployment to target VMs
-- Docker-based delivery
-- self-update logic
-- multibranch or advanced job orchestration
+- one dedicated k3s VM provisioned with Terraform
+- k3s installation via `user_data`
+- kubeconfig export for Jenkins integration
+- Jenkins Kubernetes plugin configuration
+- custom Docker image for Jenkins agents
+- Jenkinsfile migration from controller execution to k8s-agent execution
+- validation of concurrent pod-based builds
 
 ---
 
-## Why a dedicated SonarQube VM
+## Why one k3s VM first
 
-A separate SonarQube VM keeps responsibilities clear:
+This milestone intentionally starts with **one k3s VM**.
 
-- **Jenkins VM** runs CI jobs
-- **SonarQube VM** stores and serves analysis results
-- future **target VMs** will receive deployed artifacts
+Reasons:
 
-This separation makes the architecture easier to reason about and closer to real environments.
+- easier to provision and debug
+- lower infrastructure complexity
+- enough to validate Jenkins dynamic agents
+- can be extended later to a second worker node
+
+So the scaling story here is:
+
+1. start with one k3s execution node
+2. prove Jenkins dynamic pod agents work
+3. later add a second node when needed
+
+---
+
+## Why k3s
+
+k3s is chosen because:
+
+- lightweight and fast to provision
+- suitable for a lab running on EC2
+- lower operational overhead than full Kubernetes distributions
+- sufficient for Jenkins agent orchestration
+
+This keeps the focus on Jenkins build-node architecture rather than on building a large Kubernetes platform.
+
+---
+
+## Why use a custom Jenkins agent Docker image
+
+This is the most important implementation decision of the milestone.
+
+The existing pipeline needs tools such as:
+
+- git
+- bash
+- Python
+- Python virtual environment support
+- CMake
+- compiler toolchain
+- cppcheck
+- clang-format
+- curl / basic utilities
+
+The default Jenkins inbound agent image does **not** include all required tools.
+
+There are two ways to handle that:
+
+### Option 1 — install tools inside the pod during the build
+This is possible, but has major downsides:
+
+- slower builds
+- less reproducible execution
+- more moving parts in the Jenkinsfile
+- harder debugging
+
+### Option 2 — use a custom prebuilt agent image
+This is the chosen approach.
+
+Benefits:
+
+- build environment is versioned
+- Jenkinsfile stays smaller
+- pod startup is faster
+- easier to reproduce and debug
+
+This milestone uses:
+
+- a custom Docker image
+- hosted in Docker Hub
+- referenced by the Jenkins Kubernetes pod template
 
 ---
 
@@ -155,147 +209,175 @@ This separation makes the architecture easier to reason about and closer to real
 
 ```
 devops-for-cplusplus/
-  CMakeLists.txt
-  readme.md
-  sonar-project.properties
-  app/
-    src/
-      main.cpp
-      config.cpp
-      echo_logic.cpp
-      version.cpp
-    include/
-      config.hpp
-      echo_logic.hpp
-      version.hpp
-    tests/
-      unit/
-        test_config.cpp
-        test_echo_logic.cpp
-      integration/
-        test_api.py
-  docs/
-  infra/
-    terraform/
-      modules/
-      userdata/
-  tools/
-    python_helper/
-      requirements.txt
-  scripts/
-    bootstrap.sh
-    build.sh
-    test.sh
-    run_local.sh
-    install_service.sh
-    service_control.sh
+├── app
+│   ├── include
+│   │   ├── config.hpp
+│   │   ├── echo_logic.hpp
+│   │   └── version.hpp
+│   ├── src
+│   │   ├── config.cpp
+│   │   ├── echo_logic.cpp
+│   │   ├── main.cpp
+│   │   └── version.cpp
+│   └── tests
+│       ├── integration
+│       │   └── test_api.py
+│       └── unit
+│           ├── test_config.cpp
+│           └── test_echo_logic.cpp
+├── docker
+│   └── jenkins-agent
+│       └── Dockerfile                            # new
+├── docs
+│   ├── images
+│   │   └── ms004-architecture.png                # new
+│   ├── ms004-runbook-1-k3s-provision.md          # new
+│   ├── ms004-runbook-2-agent-image.md            # new
+│   ├── ms004-runbook-3-k8s-plugin.md             # new
+│   ├── ms004-runbook-4-pipeline-migration.md     # new
+│   ├── ms004-troubleshooting-k8s-agents.md       # new
+├── infra
+│   └── terraform
+│       ├── modules
+│       ├── user_data
+│       │   ├── k3s_setup.sh                      # new
+├── jenkins
+│   ├── agent-build
+│   │   └── Jenkinsfile                           # new
+│   ├── agent-test
+│   │   └── Jenkinsfile                           # new
+│   ├── Jenkinsfile
+│   └── Jenkinsfile_scripted                      # new
+├── scripts
+│   ├── bootstrap.sh
+│   ├── build.sh
+│   ├── install_service.sh
+│   ├── package.sh
+│   ├── run_local.sh
+│   ├── service_control.sh
+│   └── test.sh
+├── tools
+│   └── python_helper
+│       └── requirements.txt
+├── CMakeLists.txt
+├── readme.md
+├── sonar-project.properties
 ```
-
----
 
 ## High-level architecture
 
 ```text
-Developer
-   |
-   v
-GitHub repository
-   |
-   v
-Jenkins on AWS EC2
-   |
-   +-- checkout source
-   +-- bootstrap Python environment
-   +-- build with CMake
-   +-- run unit tests
-   +-- run integration tests
-   +-- generate compile_commands.json
-   +-- run SonarQube analysis
-   +-- wait for quality gate
-   +-- package artifact
-   +-- archive artifact in Jenkins
-                 |
-                 v
-         SonarQube on AWS EC2
+GitHub
+  |
+  v
+Jenkins Controller VM
+  |
+  +--> SonarQube VM
+  |
+  +--> Kubernetes Plugin
+         |
+         v
+      k3s VM
+         |
+         +--> Ephemeral Jenkins Agent Pod
+         +--> Ephemeral Jenkins Agent Pod
 ```
 
----
-
-## C++-specific analysis approach
-
-For this project, the preferred flow is:
-
-1. configure CMake to export `compile_commands.json`
-2. build the project
-3. run SonarScanner from the project root
-4. pass the path to the compilation database
-5. wait for the Quality Gate result in Jenkins
-
-This is important because C++ analysis is not a simple source-only scan.
+![Project architecture | Milestone 4](./docs/images/ms004-architecture.png)
 
 ---
 
-## Minimal SonarQube/Jenkins flow
+## Infrastructure changes in this milestone
 
-The expected Jenkins flow after this milestone:
+Additions to the existing infrastructure:
 
-1. Checkout
-2. Bootstrap Python
-3. Build
-4. Unit Tests
-5. Integration Tests
-6. SonarQube Analysis
-7. Quality Gate
-8. Package Artifact
-9. Archive Artifact
+- one new EC2 instance for k3s
+- one new security group for k3s
+- one new bootstrap script for k3s installation
+- Terraform outputs for k3s API endpoint and SSH access
 
-This order is intentional:
+No changes to the basic role of:
 
-- quality checks happen **before** packaging is treated as successful output
-- quality gate becomes part of CI, not an afterthought
+- Jenkins VM
+- SonarQube VM
+
+Other than Jenkins plugin and cloud configuration.
+
+---
+
+## Concurrency validation
+
+- temporary remove or comment `disableConcurrentBuilds()` option in the pipeline
+- ensure the job and cloud settings allow concurrent agents
+- trigger 2  pipeline runs
+
+---
+
+## Recommended implementation order
+
+This milestone should be implemented in this order:
+
+1. provision k3s VM with Terraform
+2. verify k3s installation manually
+3. extract and fix kubeconfig
+4. create custom Jenkins agent Docker image
+5. push the image to Docker Hub
+6. install/configure Jenkins Kubernetes plugin
+7. create Kubernetes cloud and pod template in Jenkins
+8. update Jenkinsfile to run on k8s agent
+9. validate single build
+10. validate concurrent builds
+
+This order matters.
+Do not try to do all steps at once.
 
 ---
 
 ## Runbooks
 
-1. [SonarQube server on AWS](./docs/ms003-runbook-sonarqube.md)
-2. [Jenkins/SonarQube integration](./docs/ms003-runbook-jenkins-sonarqube.md)
-3. [Introducing QonarQube Quality Gate into CI pipeline](./docs/ms003-pipeline-design-sonarqube.md)
+- [k3s Cluster Provisioning runbook](./docs/ms004-runbook-1-k3s-provision.md)
+- [Custom Jenkins Agent Docker Image](./docs/ms004-runbook-2-agent-image.md)
+- [Jenkins Kubernetes Plugin Integration](./docs/ms004-runbook-3-k8s-plugin.md)
+- [Pipeline Migration to Kubernetes Agents](./docs/ms004-runbook-4-pipeline-migration.md)
+- [Troubleshooting Jenkins Kubernetes Agents](./docs/ms004-troubleshooting-k8s-agents.md)
 
-## Definition of done
+---
+## Success criteria
 
-Milestone 3 is complete when:
+The milestone is successful when:
 
-- Terraform provisions a working SonarQube VM
-- SonarQube is reachable from browser
-- Jenkins is configured to talk to SonarQube
-- the project produces `compile_commands.json`
-- the pipeline runs SonarQube analysis successfully
-- the pipeline waits for the quality gate result
-- a failed quality gate can stop the pipeline
-- documentation is sufficient to rebuild the setup from scratch
+- k3s VM can be recreated via Terraform
+- Jenkins can connect to k3s
+- Jenkins can create ephemeral agent pods
+- the pipeline runs successfully on those pods
+- controller resources are no longer used for build execution
+- two queued builds result in two separate pods
 
 ---
 
 ## Limitations of this milestone
 
-- SonarQube runs on a single VM
-- Jenkins still builds on the controller node
-- no deployment stage yet
-- no persistent database tuning / production hardening
+This setup is still a lab and has some accepted limitations:
 
-These limitations are acceptable for this lab because the goal is to build a clear, reproducible learning path.
+- single k3s VM by default
+- no production-grade ingress or TLS
+- no autoscaling groups
+- no cluster autoscaler
+- Jenkins controller still runs as a standalone VM
+- manual Jenkins UI cloud setup unless automated later
+- SonarQube is currently pinned to 9.9.8 LTS for provisioning stability; newer packaging was tested but not yet made reproducible in this lab.
+
+These are acceptable because the goal is to demonstrate **dynamic Kubernetes-based Jenkins agents**, not to build a full production platform in one step.
 
 ---
 
 ## What comes next
 
-Once this milestone is stable, the next logical step is:
+After this milestone, the next logical steps are:
 
-- deployment from Jenkins to target Linux nodes
+- deployment to multiple EC2 Linux target nodes (2 environments)
+- centrilize storage for terraform state files
 - post-deploy validation
-- artifact promotion strategy
-- remote update workflow for simulated devices
-
-That will shift the project from **CI + quality gate** toward **actual CD**.
-
+- release delivery simulation
+- possibly a second k3s worker node for additional CI capacity
+- Jenkins and SonarQube backup/restore automation with Ansible

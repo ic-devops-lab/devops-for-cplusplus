@@ -1,0 +1,301 @@
+# A Lab for practicing DevOps basics for a C++ project
+
+This project is inspired by real-world CI/CD challenges for distributed Linux-based systems.
+
+## Project goal
+
+This repository demonstrates a minimal but realistic CI setup for a C++ service:
+
+- build and test automation (CMake + pytest)
+- Jenkins-based CI pipeline
+- SonarQube Quality Gate
+- reproducible Jenkins/SonarQube provisioning on AWS using Terraform
+
+The goal is to simulate a production-like CI environment for non-Java services.
+
+---
+
+## Rough plan
+
+- one clean C++ service
+- one excellent Jenkins pipeline
+- one deployment model without containers first
+- one deployment model with containers second
+- one simple self-update mechanism as a stretch goal
+
+---
+
+## Starting point
+
+- small C++ REST service with:
+  - GET /health
+  - GET /version
+  - GET /config
+  - POST /echo
+- CMake project
+- unit tests with GoogleTest
+- Python integration tests
+
+The goal is to showcase how to support a C++ app from a DevOps perspective, not to dive into C++ development.
+
+---
+
+## Desired Architecture
+
+- DevOps VM: used for development and testing
+- Jenkins VM: runs CI pipelines
+- Targets: future deployment nodes (planned in next milestones)
+
+---
+
+## Project organization
+
+Project stages (milestones) will be saved as branches. The main branch duplicates the most recent project stage.
+
+**Current stage**: Milestone 3 — SonarQube Integration\
+**Branch**: 003-sonarqube
+
+**Previous stages**:
+- [Milestone 1: Local Setup](./readme-ms001.md) / branch: 001-local-setup
+- [Milestone 2 — Jenkins CI on AWS](./readme-ms002.md) / branch: 002-jenkins-ci
+
+---
+
+# Milestone 3 — SonarQube Integration
+
+At this stage we add a dedicated **SonarQube server** and integrate it into the existing Jenkins CI pipeline.
+
+The goal is to introduce a **quality gate** into the delivery flow.\
+Up to Milestone 2, the project already had:
+
+- local Linux-based development workflow
+- CMake build
+- unit tests
+- Python integration tests
+- Jenkins CI on AWS
+- artifact packaging and archiving in Jenkins
+
+Milestone 3 extends that setup with **continuous inspection**.
+
+---
+
+## Why this milestone exists
+
+For a C++ service, build/test automation alone is not the full story.
+A realistic CI workflow should also answer questions like:
+
+- does the code meet a defined quality baseline?
+- can quality checks stop the pipeline before packaging or deployment?
+- can analysis results be centralized and reviewed over time?
+
+SonarQube addresses that part of the workflow and introduces:
+
+- a visible quality gate in the pipeline
+- centralized analysis history
+- a more realistic CI flow for C++ code
+- a stronger distinction between:
+  - build success
+  - test success
+  - quality acceptance
+
+That makes the project more representative of production delivery systems.
+
+For C and C++, SonarQube analysis needs real build context.
+That is why this milestone is built around generating and using a **compilation database** (`compile_commands.json`) from the CMake build.
+The Jenkins pipeline then submits the analysis and waits for the **quality gate** result before continuing.
+
+---
+
+## Objective
+
+Introduce a dedicated SonarQube server on AWS and connect it to the existing Jenkins-based CI pipeline for this C++ project.
+
+This milestone is intentionally focused on:
+
+- static code analysis
+- quality reporting
+- quality gate enforcement
+- keeping the setup reproducible
+
+---
+
+## Scope
+
+- dedicated SonarQube VM provisioned with Terraform
+- SonarQube server installation on that VM
+- SonarQube project and token setup
+- Jenkins integration with SonarQube
+- Jenkins pipeline stages for:
+  - SonarQube analysis
+  - Quality Gate check
+- CMake configuration updated to produce `compile_commands.json`
+- Sonar scanner configuration for the project
+
+**Not included yet**
+- deployment to target VMs
+- Docker-based delivery
+- self-update logic
+- multibranch or advanced job orchestration
+
+---
+
+## Why a dedicated SonarQube VM
+
+A separate SonarQube VM keeps responsibilities clear:
+
+- **Jenkins VM** runs CI jobs
+- **SonarQube VM** stores and serves analysis results
+- future **target VMs** will receive deployed artifacts
+
+This separation makes the architecture easier to reason about and closer to real environments.
+
+---
+
+## Project Structure
+
+```
+devops-for-cplusplus/
+  CMakeLists.txt
+  readme.md
+  sonar-project.properties
+  app/
+    src/
+      main.cpp
+      config.cpp
+      echo_logic.cpp
+      version.cpp
+    include/
+      config.hpp
+      echo_logic.hpp
+      version.hpp
+    tests/
+      unit/
+        test_config.cpp
+        test_echo_logic.cpp
+      integration/
+        test_api.py
+  docs/
+  infra/
+    terraform/
+      modules/
+      userdata/
+  tools/
+    python_helper/
+      requirements.txt
+  scripts/
+    bootstrap.sh
+    build.sh
+    test.sh
+    run_local.sh
+    install_service.sh
+    service_control.sh
+```
+
+---
+
+## High-level architecture
+
+```text
+Developer
+   |
+   v
+GitHub repository
+   |
+   v
+Jenkins on AWS EC2
+   |
+   +-- checkout source
+   +-- bootstrap Python environment
+   +-- build with CMake
+   +-- run unit tests
+   +-- run integration tests
+   +-- generate compile_commands.json
+   +-- run SonarQube analysis
+   +-- wait for quality gate
+   +-- package artifact
+   +-- archive artifact in Jenkins
+                 |
+                 v
+         SonarQube on AWS EC2
+```
+
+---
+
+## C++-specific analysis approach
+
+For this project, the preferred flow is:
+
+1. configure CMake to export `compile_commands.json`
+2. build the project
+3. run SonarScanner from the project root
+4. pass the path to the compilation database
+5. wait for the Quality Gate result in Jenkins
+
+This is important because C++ analysis is not a simple source-only scan.
+
+---
+
+## Minimal SonarQube/Jenkins flow
+
+The expected Jenkins flow after this milestone:
+
+1. Checkout
+2. Bootstrap Python
+3. Build
+4. Unit Tests
+5. Integration Tests
+6. SonarQube Analysis
+7. Quality Gate
+8. Package Artifact
+9. Archive Artifact
+
+This order is intentional:
+
+- quality checks happen **before** packaging is treated as successful output
+- quality gate becomes part of CI, not an afterthought
+
+---
+
+## Runbooks
+
+1. [SonarQube server on AWS](./docs/ms003-runbook-sonarqube.md)
+2. [Jenkins/SonarQube integration](./docs/ms003-runbook-jenkins-sonarqube.md)
+3. [Introducing QonarQube Quality Gate into CI pipeline](./docs/ms003-pipeline-design-sonarqube.md)
+
+## Definition of done
+
+Milestone 3 is complete when:
+
+- Terraform provisions a working SonarQube VM
+- SonarQube is reachable from browser
+- Jenkins is configured to talk to SonarQube
+- the project produces `compile_commands.json`
+- the pipeline runs SonarQube analysis successfully
+- the pipeline waits for the quality gate result
+- a failed quality gate can stop the pipeline
+- documentation is sufficient to rebuild the setup from scratch
+
+---
+
+## Limitations of this milestone
+
+- SonarQube runs on a single VM
+- Jenkins still builds on the controller node
+- no deployment stage yet
+- no persistent database tuning / production hardening
+
+These limitations are acceptable for this lab because the goal is to build a clear, reproducible learning path.
+
+---
+
+## What comes next
+
+Once this milestone is stable, the next logical step is:
+
+- deployment from Jenkins to target Linux nodes
+- post-deploy validation
+- artifact promotion strategy
+- remote update workflow for simulated devices
+
+That will shift the project from **CI + quality gate** toward **actual CD**.
+
