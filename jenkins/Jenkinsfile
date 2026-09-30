@@ -1,3 +1,5 @@
+@Library('iclabs_sample') _
+
 pipeline {
   agent {
     label 'k8s-agent'
@@ -30,7 +32,13 @@ pipeline {
 
     stage('Build') {
       steps {
-        sh './scripts/build.sh'
+        // sh './scripts/build.sh'
+        // Uses cppBuild from https://github.com/ic-devops-lab/jenkins-shared-lib-sample
+        cppBuild(
+          // buildDir: 'build',
+          // buildType: 'Debug',
+          // buildTesting: true
+        )
       }
     }
 
