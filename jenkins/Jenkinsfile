@@ -25,8 +25,9 @@ pipeline {
 
     stage('Bootstrap Python') {
       steps {
-        sh 'chmod +x scripts/*.sh'
-        sh './scripts/bootstrap.sh'
+        pythonBootstrap(
+          requirements: 'tools/python_helper/requirements.txt'
+        )
       }
     }
 
@@ -96,6 +97,7 @@ pipeline {
 
     stage('Package Artifact') {
       steps {
+        sh 'chmod +x scripts/package.sh'
         sh './scripts/package.sh'
       }
     }
