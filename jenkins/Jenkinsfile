@@ -60,11 +60,10 @@ pipeline {
 
     stage('Code Quality') {
       steps {
+        cppCheck()
+
         sh '''
           set -e
-
-          echo "=== Running cppcheck ==="
-          cppcheck --enable=all --inconclusive --quiet app/src app/include 2> cppcheck-report.txt || true
 
           echo "=== Running clang-format check ==="
           find app/src app/include -type f \\( -name "*.cpp" -o -name "*.hpp" \\) -print0 | \
